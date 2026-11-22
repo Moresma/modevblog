@@ -1,0 +1,28 @@
+{# UN commentaire dans le panneau. Reçoit "comment" (et "liked_comment_ids" sur la page article). #}
+<li class="comment" id="comment-{{ comment.id }}">
+    {# Rond avec l'initiale de l'auteur (comme une photo de profil) #}
+    <span class="avatar">{{ comment.author.username|first|upper }}</span>
+
+    {# Texte du commentaire #}
+    <div class="comment__body">
+        {# Nom de l'auteur + ancienneté (ex. "il y a 5 minutes") #}
+        <p class="comment__meta">
+            <strong>{{ comment.author.username }}</strong>
+            <span>il y a {{ comment.created_at|timesince }}</span>
+        </p>
+        {# Contenu ; linebreaksbr garde les retours à la ligne #}
+        <p class="comment__text">{{ comment.content|linebreaksbr }}</p>
+    </div>
+
+    {# Bouton cœur du commentaire ; data-like-url = adresse appelée par main.js #}
+    <button type="button"
+            class="like-btn like-btn--sm{% if comment.id in liked_comment_ids %} is-liked{% endif %}"
+            data-like-url="{% url 'comments:comment_like' comment.id %}"
+            aria-pressed="{% if comment.id in liked_comment_ids %}true{% else %}false{% endif %}"
+            aria-label="J'aime ce commentaire">
+        {# Icône cœur (dessin SVG) #}
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.5-9.2C1 8.3 3.2 5 6.6 5c2 0 3.4 1.1 4.4 2.6l1 1.4 1-1.4C14 6.1 15.4 5 17.4 5 20.8 5 23 8.3 21.5 11.8 19.5 16.4 12 21 12 21z"/></svg>
+        {# Nombre de likes #}
+        <span class="like-count">{{ comment.like_count|default:0 }}</span>
+    </button>
+</li>

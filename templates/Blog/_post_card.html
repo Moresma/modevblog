@@ -1,0 +1,40 @@
+{# Carte d'UN article, réutilisée par l'accueil et les rubriques. Reçoit "post" et "i". #}
+{# "reveal" = apparaît au scroll ; --i = position, pour décaler l'animation des cartes #}
+<article class="card reveal" style="--i: {{ i|default:0 }}">
+    {# Toute la carte est cliquable et mène à la page de l'article #}
+    <a href="{% url 'post_detail' post.id %}" class="card__link">
+        {# Zone image (format 4:3, coins arrondis) #}
+        <div class="card__media">
+            {# Si l'article a une image de couverture… #}
+            {% if post.image %}
+                {# …on l'affiche ; loading="lazy" = chargée seulement à l'approche de l'écran #}
+                <img src="{{ post.image.url }}" alt="{{ post.title }}" loading="lazy">
+            {# …sinon, un fond neutre avec la première lettre du titre #}
+            {% else %}
+                <div class="card__placeholder">{{ post.title|first|upper }}</div>
+            {% endif %}
+        </div>
+
+        {# Texte de la carte #}
+        <div class="card__body">
+            {# Nom de la catégorie en petites majuscules #}
+            <span class="card__tag">{{ post.category.name }}</span>
+            {# Titre de l'article (souligné au survol) #}
+            <h3 class="card__title">{{ post.title }}</h3>
+            {# Résumé, coupé à 24 mots, seulement s'il existe #}
+            {% if post.excerpt %}
+                <p class="card__excerpt">{{ post.excerpt|truncatewords:24 }}</p>
+            {% endif %}
+            {# Auteur et date de publication (ex. "alice · 18 novembre 2026") #}
+            <p class="card__meta">
+                {{ post.author.username }}
+                {% if post.published_at %}· {{ post.published_at|date:"j F Y" }}{% endif %}
+                {# Compteurs de likes et de commentaires (calculés dans la vue) #}
+                <span class="card__stats">
+                    <span>♥ {{ post.like_count|default:0 }}</span>
+                    <span>💬 {{ post.comment_count|default:0 }}</span>
+                </span>
+            </p>
+        </div>
+    </a>
+</article>

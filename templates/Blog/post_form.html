@@ -1,0 +1,159 @@
+{# Page "Écrire" : sert à la fois à créer et à modifier un article (vues post_create et post_edit) #}
+{% extends "base.html" %}
+
+{# Titre de l'onglet : "Créer un article" ou "Modifier l'article" (envoyé par la vue) #}
+{% block title %}{{ title }} - ModevBlog{% endblock %}
+
+{# Menu transparent au-dessus du bandeau image #}
+{% block nav_class %}{% endblock %}
+
+{# Contenu de la page #}
+{% block content %}
+{# Bandeau plein écran avec l'image de fond "Écrire un article" (choisie dans l'admin) ; id="hero" = géré par main.js #}
+<header class="banner" id="hero">
+    {# Image de fond (sinon dégradé sombre) #}
+    {% if page_bg.write %}
+        <div class="banner__media" id="heroMedia"><img src="{{ page_bg.write }}" alt="" fetchpriority="high"></div>
+    {% endif %}
+    {# Dégradé sombre pour la lisibilité #}
+    <div class="banner__shade"></div>
+    {# Lien retour + titre de la page #}
+    <div class="banner__content" id="heroContent">
+        <a href="{% url 'my_posts' %}" class="banner__back reveal-up" style="--d: .05s">← Mes articles</a>
+        {# "Nouvel article" ou "On peaufine ton article" (envoyé par la vue) #}
+        <h1 class="page-head__title page-head__title--md reveal-up" style="--d: .12s">{{ title }}</h1>
+    </div>
+
+
+        {# Indicateur "Découvrir" en bas à droite ; clic = défilement vers le contenu #}
+        <a href="#editeur" class="hero__scroll reveal-up" style="--d: .8s" aria-label="Voir la suite">
+            <span>Découvrir</span>
+            <i></i>
+        </a>
+</header>
+
+{# Le formulaire entoure toute la page. enctype obligatoire pour envoyer une image. #}
+<form method="post" enctype="multipart/form-data" class="editor editor--after-banner" id="editeur" novalidate>
+    {# Jeton de sécurité CSRF #}
+    {% csrf_token %}
+
+    {# Erreurs générales du formulaire, s'il y en a #}
+    {% if form.non_field_errors %}
+        <div class="auth__alert">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    {# Grille : réglages (formulaire) à gauche, zone d'écriture à droite #}
+    <div class="editor__grid">
+
+        {# ===== Colonne de droite : l'écriture (placée à droite par le CSS) ===== #}
+        <div class="editor__main reveal-up" style="--d: .15s">
+            {# Titre de l'article : grand champ sans bordure #}
+            <div class="editor__title{% if form.title.errors %} has-error{% endif %}">
+                {# Libellé caché à l'écran mais lu par les lecteurs d'écran #}
+                <label for="{{ form.title.id_for_label }}" class="sr-only">Titre</label>
+                {{ form.title }}
+                {# Erreur sur le titre (ex. champ vide) #}
+                {{ form.title.errors }}
+            </div>
+
+            {# Résumé de l'article #}
+            <div class="editor__excerpt">
+                <label for="{{ form.excerpt.id_for_label }}" class="sr-only">Résumé</label>
+                {{ form.excerpt }}
+                {{ form.excerpt.errors }}
+            </div>
+
+            {# Ligne de séparation fine #}
+            <hr class="editor__sep">
+
+            {# Contenu principal de l'article #}
+            <div class="editor__content{% if form.content.errors %} has-error{% endif %}">
+                <label for="{{ form.content.id_for_label }}" class="sr-only">Contenu</label>
+                {{ form.content }}
+                {{ form.content.errors }}
+            </div>
+        </div>
+
+        {# ===== Colonne de gauche : les réglages (placée à gauche par le CSS, reste visible au scroll) ===== #}
+        <aside class="editor__side reveal-up" style="--d: .25s">
+
+            {# --- Image de couverture --- #}
+            <div class="panel">
+                {# Titre du bloc #}
+                <p class="panel__label">Une belle photo ?</p>
+                {# Zone cliquable : un clic ouvre la sélection de fichier #}
+                <label class="upload{% if form.instance.image %} has-image{% endif %}" for="{{ form.image.id_for_label }}">
+                    {# Aperçu : image actuelle en modification, remplacée par main.js quand on choisit un fichier #}
+                    <img id="uploadPreview" alt="" {% if form.instance.image %}src="{{ form.instance.image.url }}"{% endif %}>
+                    {# Texte affiché tant qu'il n'y a pas d'image #}
+                    <span class="upload__hint">Clique ici pour ajouter une image qui donne envie</span>
+                    {# Le vrai champ fichier, caché visuellement #}
+                    <input type="file" name="{{ form.image.html_name }}" id="{{ form.image.id_for_label }}" accept="image/*" class="upload__input">
+                </label>
+                {# En modification : case pour retirer l'image actuelle #}
+                {% if form.instance.image %}
+                    <label class="check">
+                        {# Nom "<champ>-clear" : c'est ce que Django attend pour supprimer l'image #}
+                        <input type="checkbox" name="{{ form.image.html_name }}-clear">
+                        Retirer l'image
+                    </label>
+                {% endif %}
+                {# Erreur sur l'image (ex. fichier qui n'est pas une image) #}
+                {{ form.image.errors }}
+            </div>
+
+            {# --- Catégorie (= onglet Religion / Projet / Tech) --- #}
+            <div class="panel field{% if form.category.errors %} has-error{% endif %}">
+                <label class="panel__label" for="{{ form.category.id_for_label }}">Ça parle de quoi ?</label>
+                {# Liste déroulante des catégories #}
+                {{ form.category }}
+                {{ form.category.errors }}
+            </div>
+
+            {# --- Tags : pastilles à cocher --- #}
+            <div class="panel">
+                <p class="panel__label">Quelques mots-clés</p>
+                <div class="chips">
+                    {# Une pastille par tag existant #}
+                    {% for tag in form.tags %}
+                        <label class="chip">
+                            {# La case à cocher (cachée, la pastille change de couleur quand elle est cochée) #}
+                            {{ tag.tag }}
+                            {# Nom du tag #}
+                            <span>{{ tag.choice_label }}</span>
+                        </label>
+                    {# Aucun tag créé pour l'instant #}
+                    {% empty %}
+                        <p class="panel__hint">Pas encore de mots-clés (ils se créent dans l'admin).</p>
+                    {% endfor %}
+                </div>
+                {{ form.tags.errors }}
+            </div>
+
+            {# --- Statut : interrupteur Brouillon / Publié --- #}
+            <div class="panel">
+                <p class="panel__label">Prêt à publier ?</p>
+                <div class="segmented">
+                    {# Un bouton par statut possible #}
+                    {% for choice in form.status %}
+                        <label class="segmented__opt">
+                            {# Le bouton radio (caché, l'option sélectionnée passe en noir) #}
+                            {{ choice.tag }}
+                            {# Texte : "Brouillon" ou "Publié" #}
+                            <span>{{ choice.choice_label }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+                {# Aide : explique la différence #}
+                <p class="panel__hint">En brouillon, toi seul le vois. Publie quand tu te sens prêt !</p>
+                {{ form.status.errors }}
+            </div>
+
+            {# Bouton d'enregistrement #}
+            <button type="submit" class="btn btn--block">C'est parti !</button>
+            {# Lien d'annulation #}
+            <a href="{% url 'my_posts' %}" class="editor__cancel">Je reviendrai plus tard</a>
+        </aside>
+    </div>
+</form>
+{% endblock %}

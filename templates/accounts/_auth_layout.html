@@ -1,0 +1,64 @@
+{# Mise en page partagée par login.html et register.html. Elle hérite elle-même de base.html. #}
+{% extends "base.html" %}
+{# Permet d'utiliser {% static %} pour pointer vers static/img/default-bg.jpg #}
+{% load static %}
+
+{# Ajoute la classe "auth-page" sur <body> #}
+{% block body_class %}auth-page{% endblock %}
+{# Bloc vidé : pas de menu de navigation sur ces pages #}
+{% block nav %}{% endblock %}
+{# Bloc vidé : pas de pied de page sur ces pages #}
+{% block footer %}{% endblock %}
+
+{# Contenu principal de la page #}
+{% block content %}
+{# Grille à deux colonnes : formulaire à gauche, image à droite #}
+<main class="auth">
+    {# Colonne de gauche : le formulaire #}
+    <section class="auth__panel">
+        {# Barre du haut : logo à gauche, lien retour à droite #}
+        <div class="auth__top">
+            {# Logo cliquable qui ramène à l'accueil #}
+            <a class="nav__logo" href="{% url 'home' %}">Modev<span>Blog</span></a>
+            {# Lien texte de retour à l'accueil #}
+            <a class="auth__back" href="{% url 'home' %}">← Accueil</a>
+        </div>
+
+        {# Boîte centrée qui contient titre + formulaire #}
+        <div class="auth__box">
+            {# Grand titre (rempli par chaque page) ; --d = délai de l'animation d'apparition #}
+            <h1 class="auth__title reveal-up" style="--d: .1s">{% block heading %}{% endblock %}</h1>
+            {# Sous-titre gris (rempli par chaque page) #}
+            <p class="auth__lead reveal-up" style="--d: .18s">{% block lead %}{% endblock %}</p>
+
+            {# Le formulaire, envoyé en POST à l'adresse courante (garde ?next= pour la connexion) #}
+            {# novalidate : laisse Django afficher ses propres messages d'erreur, en français #}
+            <form method="post" class="auth__form reveal-up" style="--d: .26s" novalidate>
+                {# Jeton de sécurité obligatoire contre les attaques CSRF #}
+                {% csrf_token %}
+
+                {# Erreurs générales (ex. "mot de passe incorrect"), affichées dans un encadré #}
+                {% if form.non_field_errors %}
+                    <div class="auth__alert">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+                {# Emplacement des champs, rempli par login.html ou register.html #}
+                {% block fields %}{% endblock %}
+            </form>
+
+            {# Lien pour passer de la connexion à l'inscription (ou l'inverse) #}
+            <p class="auth__switch reveal-up" style="--d: .34s">{% block switch %}{% endblock %}</p>
+        </div>
+    </section>
+
+    {# Colonne de droite : l'image (masquée sur mobile, voir main.css) #}
+    <aside class="auth__visual">
+        {# Image de fond : bloc "visual" remplacé par login.html / register.html ; par défaut static/img/default-bg.jpg #}
+        <img src="{% block visual %}{% static 'img/default-bg.jpg' %}{% endblock %}" alt="">
+        {# Dégradé sombre en bas de l'image pour que le texte reste lisible #}
+        <div class="auth__visual-shade"></div>
+        {# Phrase en grand sur l'image ; chaque page peut la remplacer via le bloc "quote" #}
+        <p class="auth__quote reveal-up" style="--d: .3s">{% block quote %}Tes idées méritent<br>d'être partagées.{% endblock %}</p>
+    </aside>
+</main>
+{% endblock %}

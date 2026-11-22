@@ -1,0 +1,70 @@
+{# Page d'accueil : hérite du gabarit commun (menu, polices, CSS, JS) #}
+{% extends "base.html" %}
+{# Permet d'utiliser {% static %} pour l'image du hero #}
+{% load static %}
+
+{# Vide la classe "is-solid" : le menu commence transparent au-dessus de l'image #}
+{% block nav_class %}{% endblock %}
+
+{# Contenu de la page #}
+{% block content %}
+    {# Hero : section plein écran avec l'image ; id="hero" est utilisé par main.js #}
+    <section class="hero" id="hero">
+        {# Conteneur de l'image, déplacé par main.js pour l'effet parallaxe #}
+        <div class="hero__media" id="heroMedia">
+            {# Image de fond "Accueil" choisie dans l'admin (Images de fond), sinon static/img/default-bg.jpg #}
+            <img src="{% if page_bg.home %}{{ page_bg.home }}{% else %}{% static 'img/default-bg.jpg' %}{% endif %}" alt="" fetchpriority="high">
+        </div>
+        {# Dégradés sombres en haut et en bas pour que le texte blanc reste lisible #}
+        <div class="hero__shade"></div>
+
+        {# Texte posé sur l'image (s'efface en douceur au scroll grâce à main.js) #}
+        <div class="hero__content" id="heroContent">
+            {# Petit texte en majuscules ; --d = délai avant son apparition #}
+            <p class="hero__eyebrow reveal-up" style="--d: .2s">Bienvenue chez Modev</p>
+            {# Grand titre ; <br> = retour à la ligne #}
+            <h1 class="hero__title reveal-up" style="--d: .35s">Foi, tech<br>&amp; cuisine.</h1>
+            {# Phrase d'accroche + bouton qui donne envie d'écrire (ou de s'inscrire) #}
+            {% if user.is_authenticated %}
+                <p class="hero__sub reveal-up" style="--d: .5s">Salut {{ user.username }} ! Une idée, une découverte ou une recette à partager aujourd'hui ?</p>
+                {# Bouton blanc vers la page Écrire #}
+                <a href="{% url 'post_create' %}" class="btn btn--light btn--inline reveal-up" style="--d: .65s">Écrire un article</a>
+            {% else %}
+                <p class="hero__sub reveal-up" style="--d: .5s">Le blog de la communauté Modev : des réflexions, des astuces et des recettes, partagées par ceux qui les vivent.</p>
+                {# Bouton blanc vers l'inscription #}
+                <a href="{% url 'register' %}" class="btn btn--light btn--inline reveal-up" style="--d: .65s">Moi aussi, je veux écrire</a>
+            {% endif %}
+        </div>
+
+        {# Indicateur "Découvrir" en bas à droite ; clic = défilement vers les articles #}
+        <a href="#articles" class="hero__scroll reveal-up" style="--d: .8s" aria-label="Voir les articles">
+            {# Texte (masqué sur mobile) #}
+            <span>Découvrir</span>
+            {# Petite ligne verticale animée #}
+            <i></i>
+        </a>
+    </section>
+
+    {# Section des articles ; id="articles" = cible du lien "Découvrir" #}
+    <main class="articles" id="articles">
+        {# En-tête de la liste : titre à gauche, nombre d'articles à droite #}
+        <div class="articles__head reveal">
+            {# Titre de la section #}
+            <h2>Les derniers articles</h2>
+            {# Nombre d'articles ; pluralize ajoute un "s" s'il y en a plusieurs #}
+            <span class="articles__count">{{ posts|length }} publication{{ posts|length|pluralize }}</span>
+        </div>
+
+        {# Grille de cartes (nombre de colonnes adapté à la largeur de l'écran) #}
+        <div class="grid">
+            {# Boucle sur les articles publiés envoyés par la vue home #}
+            {% for post in posts %}
+                {# Affiche une carte ; i = position, sert à décaler l'animation d'apparition #}
+                {% include "Blog/_post_card.html" with i=forloop.counter0 %}
+            {# Si la liste est vide #}
+            {% empty %}
+                <p class="empty reveal">Personne n'a encore écrit… et si c'était toi le premier ? <a href="{% url 'post_create' %}">Écrire un article</a></p>
+            {% endfor %}
+        </div>
+    </main>
+{% endblock %}

@@ -1,0 +1,27 @@
+{# Hérite de la mise en page commune connexion/inscription (formulaire à gauche, image à droite) #}
+{% extends "accounts/_auth_layout.html" %}
+
+{# Titre affiché dans l'onglet du navigateur #}
+{% block title %}Connexion - ModevBlog{% endblock %}
+{# Image de droite : image "Connexion" de l'admin si elle existe, sinon celle par défaut #}
+{% block visual %}{% if page_bg.login %}{{ page_bg.login }}{% else %}{{ block.super }}{% endif %}{% endblock %}
+{# Grand titre au-dessus du formulaire #}
+{% block heading %}Te revoilà !{% endblock %}
+{# Petite phrase grise sous le titre #}
+{% block lead %}On t'attendait. Connecte-toi et viens partager tes idées.{% endblock %}
+
+{# Champs du formulaire : insérés à l'intérieur du <form> défini dans _auth_layout.html #}
+{% block fields %}
+    {# Champ "Nom d'utilisateur" (libellé + saisie + erreurs, voir _field.html) #}
+    {% include "accounts/_field.html" with field=form.username %}
+    {# Champ "Mot de passe" (le JS ajoute le bouton Afficher/Masquer) #}
+    {% include "accounts/_field.html" with field=form.password %}
+
+    {# Bouton qui envoie le formulaire à la vue login_view (apps/accounts/views.py) #}
+    <button type="submit" class="btn">C'est parti</button>
+{% endblock %}
+
+{# Lien sous le formulaire pour aller vers la page d'inscription #}
+{% block switch %}
+    Nouveau par ici ? <a href="{% url 'register' %}">Rejoins-nous</a>
+{% endblock %}

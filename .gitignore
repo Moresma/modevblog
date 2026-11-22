@@ -1,0 +1,31 @@
+# Environnement Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Base de données locale (comptes utilisateurs, articles) : chacun a la sienne
+db.sqlite3
+db.sqlite3-journal
+
+# Fichiers envoyés par les utilisateurs : on ne garde que les images de fond du site
+media/*
+!media/backgrounds/
+!media/categories/
+
+# Photos personnelles hors du dossier media
+posts/
+static/img/hero.jpg
+
+# Fichiers générés
+staticfiles/
+
+# Secrets et réglages locaux
+.env
+*.log
+
+# Éditeurs / système
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

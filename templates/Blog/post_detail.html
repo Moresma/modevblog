@@ -1,0 +1,226 @@
+{# Page d'un article, avec likes et commentaires façon TikTok #}
+{% extends "base.html" %}
+
+{# Titre de l'onglet = titre de l'article #}
+{% block title %}{{ post.title }} - ModevBlog{% endblock %}
+
+{# Contenu de la page (mise en page classique de blog, menu sur fond clair) #}
+{% block content %}
+{# Barre de progression de lecture, tout en haut de l'écran (remplie par main.js) #}
+<div class="progress" aria-hidden="true"><span id="readProgress"></span></div>
+
+{# ===== Article complet ===== #}
+<article class="post" id="lecture">
+
+    {# ----- En-tête de l'article, centré ----- #}
+    <header class="post__head">
+        {# Fil d'Ariane : Accueil › Rubrique #}
+        <nav class="post__crumbs reveal-up" style="--d: .05s" aria-label="Fil d'Ariane">
+            <a href="{% url 'home' %}">Accueil</a>
+            <span aria-hidden="true">›</span>
+            <a href="{% url 'category' post.category.slug %}">{{ post.category.name }}</a>
+        </nav>
+
+        {# Bandeau affiché seulement sur un brouillon #}
+        {% if not is_published %}
+            <p class="read__draft">Brouillon : toi seul vois cette page pour l'instant.</p>
+        {% endif %}
+
+        {# Rubrique en pastille #}
+        <a href="{% url 'category' post.category.slug %}" class="post__cat reveal-up" style="--d: .1s">{{ post.category.name }}</a>
+        {# Titre de l'article #}
+        <h1 class="post__title reveal-up" style="--d: .16s">{{ post.title }}</h1>
+        {# Résumé en chapeau #}
+        {% if post.excerpt %}
+            <p class="post__lead reveal-up" style="--d: .22s">{{ post.excerpt }}</p>
+        {% endif %}
+
+        {# Auteur · date · temps de lecture #}
+        <div class="post__meta reveal-up" style="--d: .28s">
+            <span class="avatar">{{ post.author.username|first|upper }}</span>
+            <div class="post__byline">
+                <strong>{{ post.author.username }}</strong>
+                <span>
+                    {% if post.published_at %}{{ post.published_at|date:"j F Y" }}{% else %}Pas encore publié{% endif %}
+                    · {{ reading_time }} min de lecture
+                </span>
+            </div>
+            {# Modifier / Supprimer : seulement pour l'auteur ou un admin #}
+            {% if can_manage %}
+                <div class="read__manage">
+                    <a href="{% url 'post_edit' post.id %}" class="action">Modifier</a>
+                    <a href="{% url 'post_delete' post.id %}" class="action action--danger">Supprimer</a>
+                </div>
+            {% endif %}
+        </div>
+    </header>
+
+    {# ----- Grande photo de l'article (16:9) ; double-clic = like ----- #}
+    {% if post.image %}
+        <figure class="read__photo reveal-up" style="--d: .34s" id="cover">
+            <img src="{{ post.image.url }}" alt="{{ post.title }}" fetchpriority="high">
+            {# Gros cœur qui apparaît au double-clic (animé par main.js) #}
+            <svg class="burst" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.5-9.2C1 8.3 3.2 5 6.6 5c2 0 3.4 1.1 4.4 2.6l1 1.4 1-1.4C14 6.1 15.4 5 17.4 5 20.8 5 23 8.3 21.5 11.8 19.5 16.4 12 21 12 21z"/></svg>
+        </figure>
+    {% endif %}
+
+    {# ----- Texte de l'article (lettrine sur la 1re lettre) ----- #}
+    <div class="read__content post__body" id="postBody">
+        {{ post.content|linebreaks }}
+    </div>
+
+    {# ----- Pied d'article : tags + partage ----- #}
+    <footer class="post__foot">
+        {% if post.tags.all %}
+            <div class="chips">
+                {% for tag in post.tags.all %}
+                    <span class="chip"><span>#{{ tag.name }}</span></span>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {# Bouton partager (même action que celui de la barre TikTok) #}
+        {% if is_published %}
+            <button type="button" class="post__share" data-share>Partager l'article ↗</button>
+        {% endif %}
+    </footer>
+
+    {# ----- Encadré "À propos de l'auteur" ----- #}
+    <section class="author-box">
+        <span class="avatar avatar--lg">{{ post.author.username|first|upper }}</span>
+        <div>
+            <p class="author-box__label">Écrit par</p>
+            <p class="author-box__name">{{ post.author.get_full_name|default:post.author.username }}</p>
+            <p class="author-box__text">
+                {{ author_post_count }} article{{ author_post_count|pluralize }} publié{{ author_post_count|pluralize }} sur ModevBlog
+                · membre depuis {{ post.author.created_at|date:"F Y" }}
+            </p>
+        </div>
+    </section>
+
+    {# ----- Appel à commenter ----- #}
+    {% if is_published %}
+        <button type="button" class="read__cta" data-open-comments>
+            {% if comment_count %}Lire les {{ comment_count }} commentaire{{ comment_count|pluralize }} et donner ton avis{% else %}Sois le premier à donner ton avis !{% endif %}
+        </button>
+    {% endif %}
+
+    {# ----- Article précédent / suivant ----- #}
+    {% if previous_post or next_post %}
+        <nav class="post-nav" aria-label="Autres articles">
+            {% if previous_post %}
+                <a href="{% url 'post_detail' previous_post.id %}" class="post-nav__link">
+                    <span>← Article précédent</span>
+                    <strong>{{ previous_post.title }}</strong>
+                </a>
+            {% else %}<span></span>{% endif %}
+            {% if next_post %}
+                <a href="{% url 'post_detail' next_post.id %}" class="post-nav__link post-nav__link--next">
+                    <span>Article suivant →</span>
+                    <strong>{{ next_post.title }}</strong>
+                </a>
+            {% endif %}
+        </nav>
+    {% endif %}
+</article>
+
+{# ===== À lire aussi : 3 articles de la même rubrique ===== #}
+{% if related_posts %}
+    <section class="articles articles--related">
+        <div class="articles__head reveal">
+            <h2>À lire aussi</h2>
+            <a href="{% url 'category' post.category.slug %}" class="articles__count">Tout voir dans {{ post.category.name }} →</a>
+        </div>
+        <div class="grid">
+            {% for post in related_posts %}
+                {% include "Blog/_post_card.html" with i=forloop.counter0 %}
+            {% endfor %}
+        </div>
+    </section>
+{% endif %}
+
+{# ===== Barre d'actions façon TikTok (seulement sur un article publié) ===== #}
+{% if is_published %}
+<div class="rail" aria-label="Actions">
+    {# Bouton J'aime de l'article #}
+    <button type="button"
+            class="rail__btn like-btn{% if liked_post %} is-liked{% endif %}"
+            id="postLike"
+            data-like-url="{% url 'post_like' post.id %}"
+            aria-pressed="{% if liked_post %}true{% else %}false{% endif %}"
+            aria-label="J'aime cet article">
+        <span class="rail__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.5-9.2C1 8.3 3.2 5 6.6 5c2 0 3.4 1.1 4.4 2.6l1 1.4 1-1.4C14 6.1 15.4 5 17.4 5 20.8 5 23 8.3 21.5 11.8 19.5 16.4 12 21 12 21z"/></svg></span>
+        <span class="like-count">{{ post_like_count }}</span>
+    </button>
+
+    {# Bouton Commentaires : ouvre le panneau #}
+    <button type="button" class="rail__btn" data-open-comments aria-label="Voir les commentaires">
+        <span class="rail__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20.5l1.6-5A8.5 8.5 0 1 1 21 11.5z"/></svg></span>
+        <span class="comment-count">{{ comment_count }}</span>
+    </button>
+
+    {# Bouton Partager (partage natif sur mobile, sinon copie du lien) #}
+    <button type="button" class="rail__btn" id="shareBtn" aria-label="Partager">
+        <span class="rail__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4l7 7-7 7v-4c-5 0-8.5 1.5-11 5 1-5 4-10 11-11V4z"/></svg></span>
+        <span>Partager</span>
+    </button>
+</div>
+
+{# ===== Panneau des commentaires ===== #}
+{# Fond sombre derrière le panneau ; un clic dessus ferme le panneau #}
+<div class="sheet-backdrop" id="sheetBackdrop" hidden></div>
+
+{# Le panneau : monte du bas sur mobile, glisse depuis la droite sur ordinateur #}
+<section class="sheet" id="commentSheet" aria-label="Commentaires" aria-hidden="true">
+    {# Petite poignée grise (mobile) #}
+    <span class="sheet__grip"></span>
+
+    {# En-tête : nombre de commentaires + bouton fermer #}
+    <header class="sheet__head">
+        <h2><span class="comment-count">{{ comment_count }}</span> commentaire<span id="commentPlural">{{ comment_count|pluralize }}</span></h2>
+        <button type="button" class="sheet__close" id="sheetClose" aria-label="Fermer">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+    </header>
+
+    {# Liste des commentaires (zone qui défile) #}
+    <div class="sheet__body">
+        <ul class="comment-list" id="commentList">
+            {% for comment in comments %}
+                {% include "comments/_comment.html" %}
+            {% endfor %}
+        </ul>
+        {# Message quand il n'y a aucun commentaire (masqué par main.js dès le premier) #}
+        <div class="sheet__empty" id="commentEmpty" {% if comments %}hidden{% endif %}>
+            <p class="sheet__empty-title">C'est bien calme ici…</p>
+            <p>Lance la discussion, ton avis compte !</p>
+        </div>
+    </div>
+
+    {# Barre d'écriture en bas du panneau #}
+    {% if user.is_authenticated %}
+        {# action = adresse de secours si le JS ne marche pas #}
+        <form class="sheet__form" id="commentForm" method="post" action="{% url 'comments:add_comment' post.id %}">
+            {# Jeton de sécurité CSRF (aussi lu par main.js pour les likes) #}
+            {% csrf_token %}
+            {# Initiale de l'utilisateur connecté #}
+            <span class="avatar avatar--sm">{{ user.username|first|upper }}</span>
+            {# Zone de saisie : Entrée envoie, Maj+Entrée va à la ligne #}
+            <textarea name="content" rows="1" placeholder="Ajoute un commentaire…" maxlength="2000" required></textarea>
+            {# Bouton envoyer (avion en papier), activé dès qu'on tape #}
+            <button type="submit" class="sheet__send" aria-label="Publier le commentaire" disabled>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5L21 3l-8.5 18-2-7.5L3 11.5z"/></svg>
+            </button>
+        </form>
+    {% else %}
+        {# Visiteur non connecté : invitation à se connecter #}
+        <div class="sheet__form sheet__form--guest">
+            {% csrf_token %}
+            <a href="{% url 'login' %}?next={{ request.path|urlencode }}%23commentaires">Connecte-toi pour commenter et liker</a>
+        </div>
+    {% endif %}
+</section>
+
+{# Petit message temporaire (ex. "Lien copié !") #}
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+{% endif %}
+{% endblock %}

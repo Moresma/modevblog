@@ -1,0 +1,94 @@
+{# Gabarit commun : toutes les pages en héritent avec {% extends "base.html" %} #}
+{# {% load static %} permet d'utiliser {% static '...' %} pour les fichiers CSS/JS/images #}
+{% load static %}<!DOCTYPE html>
+{# Langue de la page : français #}
+<html lang="fr">
+<head>
+    {# Encodage des caractères (accents) #}
+    <meta charset="UTF-8">
+    {# Adapte la page à la largeur des téléphones #}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {# Titre de l'onglet ; chaque page peut le remplacer via le bloc "title" #}
+    <title>{% block title %}ModevBlog{% endblock %}</title>
+    {# Pré-connexion aux serveurs de Google Fonts pour charger les polices plus vite #}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    {# Polices : Fraunces (titres) et Inter (texte) #}
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    {# Feuille de style du site ; ?v=... force le navigateur à prendre la dernière version #}
+    <link rel="stylesheet" href="{% static 'css/main.css' %}?v={{ static_version }}">
+    {# Signale tout de suite que le JS est actif (évite un clignotement des animations) #}
+    <script>document.documentElement.classList.add("js");</script>
+</head>
+
+{# Chaque page peut ajouter une classe sur <body> via le bloc "body_class" #}
+<body class="{% block body_class %}{% endblock %}">
+
+    {# Bloc "nav" : le menu. Les pages connexion/inscription le vident. #}
+    {% block nav %}
+    {# Barre de menu fixée en haut. "is-solid" = fond clair ; l'accueil l'enlève (menu transparent sur l'image) #}
+    <header class="nav {% block nav_class %}is-solid{% endblock %}" id="nav">
+        {# Logo cliquable vers l'accueil #}
+        <a class="nav__logo" href="{% url 'home' %}">Modev<span>Blog</span></a>
+
+        {# Bouton "hamburger" visible seulement sur mobile ; ouvre/ferme le menu (géré par main.js) #}
+        <button class="nav__toggle" id="navToggle" aria-label="Ouvrir le menu" aria-expanded="false">
+            {# Les deux traits du bouton #}
+            <span></span><span></span>
+        </button>
+
+        {# Conteneur des liens (devient un menu plein écran sur mobile) #}
+        <div class="nav__menu">
+            {# Les onglets de rubriques #}
+            <nav class="nav__tabs" aria-label="Rubriques">
+                {# Onglet Accueil ; souligné si la vue a envoyé active_tab = "home" #}
+                <a href="{% url 'home' %}" {% if active_tab == "home" %}class="is-active" aria-current="page"{% endif %}>Accueil</a>
+                {# Un onglet par catégorie (Religion, Projet, Tech), fournies par apps/Blog/context_processors.py #}
+                {% for cat in nav_categories %}
+                    {# Lien vers /categorie/<slug>/ ; souligné si c'est la rubrique affichée #}
+                    <a href="{% url 'category' cat.slug %}" {% if active_tab == cat.slug %}class="is-active" aria-current="page"{% endif %}>{{ cat.name }}</a>
+                {% endfor %}
+            </nav>
+
+            {# Liens liés au compte, à droite #}
+            <div class="nav__account">
+                {# Si l'utilisateur est connecté… #}
+                {% if user.is_authenticated %}
+                    {# Lien vers ses articles (brouillons compris) #}
+                    <a href="{% url 'my_posts' %}">Mes articles</a>
+                    {# Bouton arrondi pour écrire un nouvel article #}
+                    <a href="{% url 'post_create' %}" class="nav__cta">Écrire</a>
+                    {# Déconnexion : obligatoirement en POST (sécurité), donc un petit formulaire #}
+                    <form method="post" action="{% url 'logout' %}">
+                        {# Jeton de sécurité CSRF #}
+                        {% csrf_token %}
+                        {# Bouton stylé comme un lien #}
+                        <button type="submit" class="nav__link-btn">Déconnexion</button>
+                    </form>
+                {# …sinon (visiteur non connecté) #}
+                {% else %}
+                    {# Lien vers la page de connexion #}
+                    <a href="{% url 'login' %}">Connexion</a>
+                    {# Bouton arrondi vers l'inscription #}
+                    <a href="{% url 'register' %}" class="nav__cta">Créer un compte</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+    {% endblock %}
+
+    {# Emplacement du contenu propre à chaque page #}
+    {% block content %}{% endblock %}
+
+    {# Bloc "footer" : pied de page. Les pages connexion/inscription le vident. #}
+    {% block footer %}
+    <footer class="footer">
+        {# {% now "Y" %} affiche l'année en cours #}
+        <p>© {% now "Y" %} ModevBlog · Écrit avec le cœur par sa communauté</p>
+    </footer>
+    {% endblock %}
+
+    {# Script des effets (menu, parallaxe, apparitions) ; "defer" = exécuté après le chargement du HTML #}
+    <script src="{% static 'js/main.js' %}?v={{ static_version }}" defer></script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+{# Page "Mes articles" : hérite du gabarit commun (menu, polices, CSS, JS) #}
+{% extends "base.html" %}
+
+{# Titre de l'onglet du navigateur #}
+{% block title %}Mes articles - ModevBlog{% endblock %}
+
+{# Menu transparent au-dessus du bandeau image #}
+{% block nav_class %}{% endblock %}
+
+{# Contenu de la page #}
+{% block content %}
+    {# Bandeau avec l'image de fond "Mes articles" (choisie dans l'admin) ; id="hero" = géré par main.js #}
+    <header class="banner" id="hero">
+        {# Image de fond (sinon dégradé sombre) #}
+        {% if page_bg.my_posts %}
+            <div class="banner__media" id="heroMedia"><img src="{{ page_bg.my_posts }}" alt="" fetchpriority="high"></div>
+        {% endif %}
+        {# Dégradé sombre pour la lisibilité #}
+        <div class="banner__shade"></div>
+
+        {# Texte à gauche, bouton à droite #}
+        <div class="banner__content banner__content--row" id="heroContent">
+            <div>
+                {# Petit texte au-dessus du titre #}
+                <p class="page-head__eyebrow reveal-up" style="--d: .05s">Ton espace</p>
+                {# Grand titre #}
+                <h1 class="page-head__title page-head__title--md reveal-up" style="--d: .15s">Mes articles</h1>
+            </div>
+            {# Bouton blanc vers le formulaire de création #}
+            <a href="{% url 'post_create' %}" class="btn btn--light btn--inline reveal-up" style="--d: .25s">+ Nouvel article</a>
+        </div>
+
+        {# Indicateur "Découvrir" en bas à droite ; clic = défilement vers le contenu #}
+        <a href="#articles" class="hero__scroll reveal-up" style="--d: .8s" aria-label="Voir la suite">
+            <span>Découvrir</span>
+            <i></i>
+        </a>
+    </header>
+
+    {# Zone principale #}
+    <main class="articles articles--tight" id="articles">
+        {# S'il y a au moins un article… #}
+        {% if posts %}
+            {# Filtres : main.js masque les lignes qui ne correspondent pas au filtre choisi #}
+            <div class="filters reveal" role="tablist" aria-label="Filtrer les articles">
+                {# Filtre "Tous" (actif par défaut) avec le nombre total #}
+                <button type="button" class="filter is-active" data-filter="all">Tous <span>{{ posts|length }}</span></button>
+                {# Filtre "Publiés" avec le nombre d'articles publiés (calculé dans la vue my_posts) #}
+                <button type="button" class="filter" data-filter="published">Publiés <span>{{ published_count }}</span></button>
+                {# Filtre "Brouillons" avec le nombre de brouillons #}
+                <button type="button" class="filter" data-filter="draft">Brouillons <span>{{ draft_count }}</span></button>
+            </div>
+
+            {# Liste des articles, une ligne par article #}
+            <ul class="post-list">
+                {# Boucle sur les articles de l'utilisateur connecté #}
+                {% for post in posts %}
+                    {# Une ligne ; data-status ("published" ou "draft") sert aux filtres ; --i décale l'animation #}
+                    <li class="post-row reveal" data-status="{{ post.status }}" style="--i: {{ forloop.counter0 }}">
+                        {# Miniature de l'article #}
+                        <div class="post-row__thumb">
+                            {# Image de couverture si elle existe… #}
+                            {% if post.image %}
+                                <img src="{{ post.image.url }}" alt="" loading="lazy">
+                            {# …sinon la première lettre du titre #}
+                            {% else %}
+                                <span>{{ post.title|first|upper }}</span>
+                            {% endif %}
+                        </div>
+
+                        {# Informations de l'article #}
+                        <div class="post-row__info">
+                            {# Ligne du haut : statut + catégorie #}
+                            <div class="post-row__top">
+                                {# Pastille de statut : verte si publié, grise si brouillon #}
+                                <span class="status status--{{ post.status }}">{{ post.get_status_display }}</span>
+                                {# Nom de la catégorie #}
+                                <span class="post-row__cat">{{ post.category.name }}</span>
+                            </div>
+                            {# Titre de l'article #}
+                            <h2 class="post-row__title">{{ post.title }}</h2>
+                            {# Date : publication si publié, sinon dernière modification #}
+                            <p class="post-row__date">
+                                {% if post.status == "published" and post.published_at %}
+                                    Publié le {{ post.published_at|date:"j F Y à H:i" }}
+                                {% else %}
+                                    Modifié le {{ post.updated_at|date:"j F Y à H:i" }}
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        {# Boutons d'action #}
+                        <div class="post-row__actions">
+                            {# "Voir" seulement si l'article est publié #}
+                            {% if post.status == "published" %}
+                                <a href="{% url 'post_detail' post_id=post.id %}" class="action">Voir</a>
+                            {% endif %}
+                            {# Lien vers le formulaire de modification #}
+                            <a href="{% url 'post_edit' post_id=post.id %}" class="action">Modifier</a>
+                            {# Lien vers la page de confirmation de suppression (en rouge) #}
+                            <a href="{% url 'post_delete' post_id=post.id %}" class="action action--danger">Supprimer</a>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            {# Message affiché par main.js quand un filtre ne renvoie aucun article #}
+            <p class="empty" id="filterEmpty" hidden>Rien par ici pour le moment.</p>
+
+        {# …sinon, aucun article : message d'accueil avec un bouton #}
+        {% else %}
+            <div class="empty-state reveal">
+                {# Titre du message #}
+                <h2>Ta page est encore toute blanche.</h2>
+                {# Texte d'encouragement #}
+                <p>Un souvenir, un projet, une idée qui te trotte dans la tête… On a hâte de te lire !</p>
+                {# Bouton vers la création d'article #}
+                <a href="{% url 'post_create' %}" class="btn btn--inline">Écrire mon premier article</a>
+            </div>
+        {% endif %}
+    </main>
+{% endblock %}

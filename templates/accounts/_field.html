@@ -1,0 +1,10 @@
+{# Bloc réutilisable pour UN champ de formulaire. Reçoit la variable "field". #}
+{# Ajoute la classe "has-error" (bordure rouge) si le champ contient une erreur #}
+<div class="field{% if field.errors %} has-error{% endif %}">
+    {# Libellé du champ ; "for" le relie à la zone de saisie (clic sur le texte = focus) #}
+    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {# La zone de saisie générée par Django (<input ...>) #}
+    {{ field }}
+    {# Liste des erreurs de ce champ (ex. "Ce nom d'utilisateur est déjà utilisé.") #}
+    {{ field.errors }}
+</div>

@@ -1,0 +1,66 @@
+{# Page d'une rubrique (Religion, Projet, Tech) : hérite du gabarit commun #}
+{% extends "base.html" %}
+
+{# Titre de l'onglet du navigateur, ex. "Tech - ModevBlog" #}
+{% block title %}{{ category.name }} - ModevBlog{% endblock %}
+
+{# Menu transparent au-dessus du bandeau image #}
+{% block nav_class %}{% endblock %}
+
+{# Contenu de la page #}
+{% block content %}
+    {# Bandeau avec l'image de fond de la catégorie (ajoutée dans l'admin) ; id="hero" = géré par main.js #}
+    <header class="banner" id="hero">
+        {# Image de fond (sinon dégradé sombre) ; id="heroMedia" = parallaxe #}
+        {% if category.cover %}
+            <div class="banner__media" id="heroMedia"><img src="{{ category.cover.url }}" alt="" fetchpriority="high"></div>
+        {% endif %}
+        {# Dégradé sombre pour que le texte blanc reste lisible #}
+        <div class="banner__shade"></div>
+
+        {# Texte du bandeau ; id="heroContent" = s'efface au scroll #}
+        <div class="banner__content" id="heroContent">
+            {# Petit texte au-dessus du titre #}
+            <p class="page-head__eyebrow reveal-up" style="--d: .05s">Rubrique</p>
+            {# Nom de la catégorie en très grand #}
+            <h1 class="page-head__title reveal-up" style="--d: .15s">{{ category.name }}</h1>
+            {# Description de la catégorie (modifiable dans l'admin) #}
+            {# Appel à écrire propre à la rubrique (modifiable dans l'admin), sinon la description #}
+            {% if category.cta %}
+                <p class="page-head__lead reveal-up" style="--d: .25s">{{ category.cta }}</p>
+            {% elif category.description %}
+                <p class="page-head__lead reveal-up" style="--d: .25s">{{ category.description }}</p>
+            {% endif %}
+            {# Bouton : ouvre la page Écrire avec cette rubrique déjà choisie #}
+            <a href="{% url 'post_create' %}?rubrique={{ category.slug }}" class="btn btn--light btn--inline banner__cta reveal-up" style="--d: .35s">À toi de jouer →</a>
+        </div>
+
+        {# Indicateur "Découvrir" en bas à droite ; clic = défilement vers le contenu #}
+        <a href="#articles" class="hero__scroll reveal-up" style="--d: .8s" aria-label="Voir la suite">
+            <span>Découvrir</span>
+            <i></i>
+        </a>
+    </header>
+
+    {# Liste des articles de la rubrique ; "articles--tight" = moins d'espace en haut #}
+    <main class="articles articles--tight" id="articles">
+        {# En-tête : titre à gauche, nombre d'articles à droite #}
+        <div class="articles__head reveal">
+            <h2>Articles</h2>
+            {# Nombre d'articles ; pluralize ajoute un "s" s'il y en a plusieurs #}
+            <span class="articles__count">{{ posts|length }} publication{{ posts|length|pluralize }}</span>
+        </div>
+
+        {# Grille de cartes #}
+        <div class="grid">
+            {# Boucle sur les articles envoyés par la vue category_posts #}
+            {% for post in posts %}
+                {# Une carte d'article ; i = position pour décaler l'animation #}
+                {% include "Blog/_post_card.html" with i=forloop.counter0 %}
+            {# Message si la rubrique est vide #}
+            {% empty %}
+                <p class="empty reveal">Rien dans « {{ category.name }} » pour l'instant… à toi d'ouvrir le bal ! <a href="{% url 'post_create' %}">Écrire un article</a></p>
+            {% endfor %}
+        </div>
+    </main>
+{% endblock %}

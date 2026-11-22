@@ -1,0 +1,42 @@
+{# Hérite de la mise en page commune connexion/inscription (formulaire à gauche, image à droite) #}
+{% extends "accounts/_auth_layout.html" %}
+
+{# Titre affiché dans l'onglet du navigateur #}
+{% block title %}Créer un compte - ModevBlog{% endblock %}
+{# Image de droite : image "Inscription" de l'admin si elle existe, sinon celle par défaut #}
+{% block visual %}{% if page_bg.register %}{{ page_bg.register }}{% else %}{{ block.super }}{% endif %}{% endblock %}
+{# Phrase affichée en grand sur l'image de droite #}
+{% block quote %}Écris, partage,<br>inspire.{% endblock %}
+{# Grand titre au-dessus du formulaire #}
+{% block heading %}Bienvenue à bord !{% endblock %}
+{# Petite phrase grise sous le titre #}
+{% block lead %}Crée ton compte en 30 secondes, ton premier article t'attend juste après.{% endblock %}
+
+{# Champs du formulaire : insérés à l'intérieur du <form> défini dans _auth_layout.html #}
+{% block fields %}
+    {# Champ "Nom d'utilisateur" (libellé + saisie + erreurs, voir _field.html) #}
+    {% include "accounts/_field.html" with field=form.username %}
+    {# Champ "Adresse email" #}
+    {% include "accounts/_field.html" with field=form.email %}
+
+    {# Ligne à deux colonnes : prénom et nom côte à côte (empilés sur mobile) #}
+    <div class="field-row">
+        {# Champ "Prénom" #}
+        {% include "accounts/_field.html" with field=form.first_name %}
+        {# Champ "Nom" #}
+        {% include "accounts/_field.html" with field=form.last_name %}
+    </div>
+
+    {# Champ "Mot de passe" (le JS ajoute le bouton Afficher/Masquer) #}
+    {% include "accounts/_field.html" with field=form.password %}
+    {# Champ "Confirmer le mot de passe" #}
+    {% include "accounts/_field.html" with field=form.password_confirm %}
+
+    {# Bouton qui envoie le formulaire à la vue register (apps/accounts/views.py) #}
+    <button type="submit" class="btn">Je me lance</button>
+{% endblock %}
+
+{# Lien sous le formulaire pour aller vers la page de connexion #}
+{% block switch %}
+    Déjà des nôtres ? <a href="{% url 'login' %}">Connecte-toi</a>
+{% endblock %}
